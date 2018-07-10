@@ -12,109 +12,79 @@ function calculateWinner(squares) {
     [0, 4, 8],
     [2, 4, 6],
   ];
-
-  for(let i=0; i < lines.length; i++) {
-    var [a,b,c] = lines[i];
-    if(squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return {
-        winnerPlayer: squares[a],
-        winnerLocation: [a,b,c]
-      }
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
     }
   }
-  return;
+  return null;
 }
 
-class Game extends React.Component {
-  constructor() {
+class Game extends React.Component{
+  constructor(){
     super();
     this.state = {
       history: [{
         squares: Array(9).fill(null),
         moveLocation: '',
       }],
+
       xIsNext: true,
       stepNumber: 0,
-      isReverse: false,
     };
   }
 
-  handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
+  handleClick(i){
+    const history =  this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length -1];
     const squares = current.squares.slice();
-
-    if(squares[i] || calculateWinner(squares)) {
-      return ;
+    if(calculateWinner(squares) || squares[i]){
+      return;
     }
-
-    const gameSize = Math.sqrt(history[0].squares.length);
-    const moveLocation = [Math.floor(i / gameSize + 1), i % gameSize + 1].join(', ');
-
+    const matrixSize = Math.sqrt(history[0].squares.length);
+    const moveLocation = [Math.floor(i / matrixSize) + 1, (i % matrixSize) + 1].join(", ");
     squares[i] = this.state.xIsNext ? 'X' : 'O';
     this.setState({
       history: history.concat([{
-        squares,
-        moveLocation
+        squares: squares,
+        moveLocation: moveLocation,
       }]),
+
       xIsNext: !this.state.xIsNext,
       stepNumber: history.length,
     });
   }
-
-  jumpTo(move) {
+  jumpTo(move){
     this.setState({
-      xIsNext: (move % 2) ? false : true,
       stepNumber: move,
-    })
+      xIsNext: (move % 2) ? false : true,
+    });
   }
-
-  reverseSort(isReverse) {
-    this.setState({
-      isReverse: !isReverse,
-    })
-  }
-
-  render() {
+  render(){
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
-    const isReverse = this.state.isReverse;
+    const squares = current.squares;
+    const winner = calculateWinner(squares);
     let status;
-
-    if(winner) {
-      status = `Winner is: ${winner.winnerPlayer}`;
-    } else if(this.state.stepNumber === 9) {
-      status = "Draw";
-    } else {
-      status = `Next player is: ${this.state.xIsNext ? 'X': 'O'}`;
+    if(winner){
+      status = "Winner is: " + winner;
+    }else if(this.state.stepNumber === 9){
+      status = "No one win";
+    }else{
+      status = "Next player is: " + (this.state.xIsNext ? 'X' : 'O');
     }
 
-    const moves = history.map((step, move) => {
-      const desc = move ? `Move #${move} (${step.moveLocation})` : 'Start game';
-      return(
-        <li key={move}>
-          <a
-            href="#"
-            onClick={() => this.jumpTo(move)}
-          >
-            {desc}
-          </a>
-        </li>
-      );
+    const moves = history.map((step, move) =>{
+      const description = move ? `Move #${move} (${step.moveLocation})` : 'Game start';
+      return <li key={move}><a href="#" /*onClick={this.jumpTo(move)}*/> {description}</a></li>
     });
-
     return(
       <div>
-        <div className="game">
-          <Board squares={current.squares}
-            onClick={i => this.handleClick(i)}
-            winner={winner && winner.winnerLocation} />
-        </div>
+        <div className="game"><Board squares={squares} onClick={i => this.handleClick(i)} /></div>
         <div className="game-info">
           <p>{status}</p>
-          <ol reversed={isReverse ? 'reverse' : ''}>{isReverse ? moves.reverse() : moves}</ol>
-          <button onClick={() => this.reverseSort(isReverse)}>Reverse list</button>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
